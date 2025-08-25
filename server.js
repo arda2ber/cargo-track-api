@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -10,14 +11,22 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// Basit test route
-app.get('/', (req, res) => {
-  res.send('Cargo Track API Çalışıyor 🚀');
+// Statik dosyalar (public klasörü)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Sağlık kontrolü için ayrı endpoint
+app.get('/health', (req, res) => {
+  res.send('OK');
 });
 
-// Route bağlama
+// API rotaları
 const cargoRoutes = require('./src/routes/cargoRoutes');
 app.use('/api/cargo', cargoRoutes);
+
+// Root'u frontend'e yönlendir
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Sunucu
 app.listen(PORT, () => {
