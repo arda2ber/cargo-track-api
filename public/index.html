@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cargo Track</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background:#0b1220; color:#e6e8ef; }
+    .wrap { max-width: 720px; margin: 40px auto; padding: 24px; }
+    .card { background:#131a2b; border:1px solid #24304a; border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    h1 { margin: 0 0 16px; font-weight: 700; font-size: 22px; }
+    p.sub { margin-top: 0; color:#aab2c8; }
+    .row { display: flex; gap: 12px; margin: 16px 0 12px; }
+    input { flex: 1; padding: 14px 16px; border-radius: 12px; border:1px solid #2b3857; background: #0f1626; color:#e6e8ef; }
+    button { padding: 14px 18px; border-radius: 12px; border:0; background:#6ea8fe; color:#0b1220; font-weight:700; cursor:pointer; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    .status { margin-top: 14px; white-space: pre-wrap; background:#0f1626; border:1px solid #2b3857; padding:16px; border-radius: 12px; }
+    .muted { color:#aab2c8; font-size: 13px; }
+    a.cta { display:inline-block; margin-top:16px; text-decoration:none; background:#22c55e; color:#062312; padding:12px 14px; border-radius:10px; font-weight:700; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>📦 Cargo Track</h1>
+      <p class="sub">Takip kodunu gir, durumunu gör. (Canlı: Railway)</p>
+
+      <div class="row">
+        <input id="code" placeholder="Örn: TR123456" />
+        <button id="btn">Sorgula</button>
+      </div>
+
+      <div id="result" class="status" hidden></div>
+      <p class="muted">Örnek test kodu: <code>TR123456</code></p>
+
+      <!-- (İsteğe bağlı) Ücretli sürüme yönlendirme: Shopier ödeme linkini bu href'e yapıştır -->
+      <!-- <a class="cta" href="SHOPIER_ODEME_LINKIN" target="_blank" rel="noopener">💳 Premium’a Geç</a> -->
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById('code');
+    const btn = document.getElementById('btn');
+    const box = document.getElementById('result');
+
+    async function query() {
+      const code = (input.value || '').trim();
+      if (!code) { input.focus(); return; }
+
+      btn.disabled = true; box.hidden = false; box.textContent = 'Sorgulanıyor...';
+
+      try {
+        // Aynı domain üzerinden çağırıyoruz: /api/cargo/track/:trackingNumber
+        const res = await fetch(`/api/cargo/track/${encodeURIComponent(code)}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Sunucu hatası (${res.status})`);
+        }
+        const data = await res.json();
+        const last = new Date(data.lastUpdate).toLocaleString('tr-TR');
+        box.textContent =
+`Takip Kodu : ${data.trackingNumber}
+Durum      : ${data.status}
+Son Güncelleme : ${last}`;
+      } catch (e) {
+        box.textContent = `Hata: ${e.message}`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    btn.addEventListener('click', query);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') query(); });
+  </script>
+</body>
+</html>
